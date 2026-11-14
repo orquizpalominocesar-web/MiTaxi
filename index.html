@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<meta name="description" content="Cuentas del taxi: ingresos, comisión de InDrive y DiDi, y gastos.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Taxi">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Mi Taxi</title>
+<style>
+:root{
+  --bg:#0b1020; --card:rgba(255,255,255,.06); --card-b:rgba(255,255,255,.10);
+  --txt:#f8fafc; --mut:#9aa4b8; --line:rgba(255,255,255,.08);
+  --green:#34d399; --green2:#10b981; --red:#fb7185; --yellow:#fde047;
+  --indrive:#c6f432; --didi:#ff8a3d; --calle:#60a5fa; --taxi:#ffd60a;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior-y:none}
+body{min-height:100vh;padding:calc(14px + env(safe-area-inset-top)) 16px 120px;max-width:520px;margin:0 auto;position:relative;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:-20% -20% auto -20%;height:70vh;z-index:-1;
+  background:radial-gradient(circle at 20% 20%,rgba(255,214,10,.22),transparent 45%),radial-gradient(circle at 85% 10%,rgba(52,211,153,.20),transparent 45%),radial-gradient(circle at 60% 60%,rgba(96,165,250,.12),transparent 50%);filter:blur(10px)}
+button{font-family:inherit;cursor:pointer}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#ffe14d,#ffb703);display:grid;place-items:center;box-shadow:0 6px 20px rgba(255,200,0,.35)}
+.logo svg{width:28px;height:28px}
+.brand h1{font-size:21px;margin:0;font-weight:900;letter-spacing:-.3px}
+.brand .d{font-size:13px;color:var(--mut);text-transform:capitalize}
+.iconbtn{width:42px;height:42px;border-radius:14px;border:1px solid var(--card-b);background:var(--card);color:var(--txt);font-size:19px;backdrop-filter:blur(10px)}
+
+.tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--card-b);padding:4px;border-radius:16px;margin-bottom:14px;position:relative}
+.tabs button{flex:1;border:0;background:transparent;color:var(--mut);font-weight:800;font-size:15px;padding:10px 0;border-radius:12px;position:relative;z-index:1;transition:color .2s}
+.tabs button.on{color:#0b1020}
+.tabs .pill{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/3);border-radius:12px;background:linear-gradient(135deg,#fff,#e2e8f0);transition:transform .35s cubic-bezier(.3,1.4,.5,1)}
+
+.hero{position:relative;border-radius:26px;padding:20px;margin-bottom:12px;overflow:hidden;
+  background:linear-gradient(140deg,#065f46 0%,#047857 45%,#10b981 100%);box-shadow:0 18px 40px rgba(16,185,129,.28)}
+.hero.neg{background:linear-gradient(140deg,#7f1d1d,#be123c 60%,#fb7185);box-shadow:0 18px 40px rgba(244,63,94,.28)}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero .row1{display:flex;justify-content:space-between;align-items:center;gap:12px;position:relative;z-index:1}
+.hero .lbl{font-size:14px;font-weight:700;opacity:.9}
+.hero .big{font-size:42px;font-weight:900;letter-spacing:-1px;line-height:1.05;margin:4px 0}
+.hero .sub{font-size:13px;opacity:.9;font-weight:600}
+.ring{width:96px;height:96px;flex:none;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring .rt{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-weight:900;font-size:18px;line-height:1}
+.ring .rt small{display:block;font-size:10px;font-weight:700;opacity:.85;margin-top:2px}
+.ring circle{transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--card-b);border-radius:18px;padding:12px 10px;backdrop-filter:blur(10px)}
+.stat .ic{font-size:18px}
+.stat .l{font-size:11.5px;color:var(--mut);font-weight:700;margin-top:4px}
+.stat .v{font-size:18px;font-weight:900;margin-top:2px;letter-spacing:-.3px}
+
+.card{background:var(--card);border:1px solid var(--card-b);border-radius:22px;padding:16px;margin-bottom:12px;backdrop-filter:blur(10px)}
+.card h2{font-size:15px;margin:0 0 12px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+.card h2 span{color:var(--mut);font-size:12px;font-weight:700}
+
+.donutwrap{display:flex;align-items:center;gap:16px}
+.donut{width:130px;height:130px;flex:none;position:relative}
+.donut svg{transform:rotate(-90deg)}
+.donut circle{transition:stroke-dasharray .8s ease,stroke-dashoffset .8s ease}
+.donut .c{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-size:11px;color:var(--mut);font-weight:700}
+.donut .c b{display:block;font-size:17px;color:var(--txt);font-weight:900}
+.leg{flex:1;display:flex;flex-direction:column;gap:8px}
+.leg div{display:flex;align-items:center;gap:8px;font-size:13.5px}
+.leg i{width:11px;height:11px;border-radius:4px;flex:none}
+.leg span{flex:1;color:var(--mut);font-weight:600}
+.leg b{font-weight:900}
+
+.bars{display:flex;align-items:flex-end;gap:8px;height:130px;padding-top:16px}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.bar .col{width:100%;border-radius:10px 10px 6px 6px;background:linear-gradient(180deg,var(--green),var(--green2));min-height:4px;transition:height .8s cubic-bezier(.2,.8,.2,1);position:relative}
+.bar .col.neg{background:linear-gradient(180deg,var(--red),#e11d48)}
+.bar .col.today{box-shadow:0 0 0 2px #fff inset}
+.bar .val{font-size:10px;font-weight:800;color:var(--mut)}
+.bar .day{font-size:11px;font-weight:800;color:var(--mut);text-transform:capitalize}
+
+.mv{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line);animation:in .35s ease both}
+.mv:first-child{border-top:0}
+@keyframes in{from{opacity:0;transform:translateY(6px)}}
+.badge{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-weight:900;font-size:14px;color:#111;flex:none}
+.mv .info{flex:1;min-width:0}
+.mv .t{font-weight:800;font-size:15.5px}
+.mv .s{font-size:12.5px;color:var(--mut);margin-top:1px}
+.mv .amt{text-align:right;font-weight:900;font-size:16.5px}
+.mv .amt small{display:block;font-size:11.5px;font-weight:700;color:var(--mut)}
+.del{background:none;border:0;color:var(--mut);font-size:18px;padding:6px;opacity:.7}
+.empty{color:var(--mut);text-align:center;padding:18px 6px;font-size:14.5px;line-height:1.5}
+.empty .e{font-size:40px;display:block;margin-bottom:6px}
+
+.foot{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
+.link{background:var(--card);border:1px solid var(--card-b);color:var(--mut);font-weight:700;font-size:13px;padding:9px 12px;border-radius:12px}
+
+.actions{position:fixed;left:0;right:0;bottom:0;padding:14px 16px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 35%);display:flex;gap:10px;max-width:520px;margin:0 auto;z-index:5}
+.btn{flex:1;border:0;border-radius:20px;padding:18px 0;font-weight:900;font-size:18px;color:#06281c;transition:transform .1s}
+.btn:active{transform:scale(.96)}
+.btn.g{background:linear-gradient(135deg,#6ee7b7,#10b981);box-shadow:0 10px 26px rgba(16,185,129,.4)}
+.btn.r{background:linear-gradient(135deg,#fda4af,#f43f5e);color:#3b0712;box-shadow:0 10px 26px rgba(244,63,94,.35)}
+
+.install{display:none;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(255,214,10,.18),rgba(255,214,10,.06));border:1px solid rgba(255,214,10,.35);border-radius:18px;padding:12px 14px;margin-bottom:12px}
+.install.show{display:flex}
+.install p{margin:0;flex:1;font-size:13.5px;font-weight:600;line-height:1.35}
+.install button{border:0;background:var(--taxi);color:#111;font-weight:900;border-radius:12px;padding:10px 14px}
+
+/* sheets */
+.ov{position:fixed;inset:0;background:rgba(3,6,15,.65);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:10;opacity:0;pointer-events:none;transition:opacity .25s}
+.ov.show{opacity:1;pointer-events:auto}
+.sheet{background:#141a2e;border:1px solid var(--card-b);width:100%;max-width:520px;border-radius:28px 28px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom));max-height:94vh;overflow:auto;transform:translateY(100%);transition:transform .35s cubic-bezier(.2,.9,.3,1)}
+.ov.show .sheet{transform:none}
+.grab{width:42px;height:5px;border-radius:3px;background:rgba(255,255,255,.2);margin:0 auto 12px}
+.sheet h3{margin:0 0 14px;font-size:21px;font-weight:900}
+.apps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.appc{border:2px solid var(--card-b);background:var(--card);border-radius:18px;padding:12px 6px;color:var(--txt);display:flex;flex-direction:column;align-items:center;gap:6px;font-weight:800;font-size:14.5px;transition:all .2s}
+.appc .b{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#111;font-weight:900;font-size:13px}
+.appc small{font-size:11.5px;color:var(--mut);font-weight:700}
+.appc.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent);transform:translateY(-2px)}
+label.f{display:block;font-size:13.5px;color:var(--mut);font-weight:700;margin:2px 0 7px}
+.money{display:flex;align-items:center;background:#0b1020;border:2px solid var(--card-b);border-radius:18px;padding:0 16px;margin-bottom:10px;transition:border-color .2s}
+.money:focus-within{border-color:var(--green)}
+.money span{font-size:24px;font-weight:900;color:var(--mut)}
+.money input{flex:1;background:none;border:0;color:var(--txt);font-weight:900;font-size:36px;padding:12px 8px;width:100%;outline:none;font-family:inherit}
+.quick{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto}
+.quick button{flex:1;min-width:52px;border:1px solid var(--card-b);background:var(--card);color:var(--txt);border-radius:12px;padding:9px 0;font-weight:800;font-size:14.5px}
+.seg{display:flex;gap:6px;margin-bottom:12px}
+.seg button{flex:1;border:2px solid var(--card-b);background:var(--card);color:var(--mut);border-radius:14px;padding:11px 0;font-weight:800;font-size:14.5px}
+.seg button.on{border-color:#fff;color:#fff}
+.inl{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.inl label{flex:1;font-size:14px;color:var(--mut);font-weight:700}
+.inl input{width:92px;background:#0b1020;border:2px solid var(--card-b);border-radius:14px;color:var(--txt);font-weight:900;font-size:20px;padding:10px;text-align:center;font-family:inherit}
+.calc{background:#0b1020;border-radius:18px;padding:14px 16px;margin-bottom:14px;border:1px solid var(--card-b)}
+.calc .ln{display:flex;justify-content:space-between;font-size:16px;padding:4px 0;font-weight:700}
+.calc .ln.tot{border-top:1px dashed var(--card-b);margin-top:6px;padding-top:10px;font-size:22px;font-weight:900;color:var(--green)}
+.split{height:10px;border-radius:5px;overflow:hidden;display:flex;background:rgba(255,255,255,.06);margin:8px 0 2px}
+.split div{transition:width .3s}
+.cats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.cat{border:2px solid var(--card-b);background:var(--card);border-radius:16px;padding:10px 4px;color:var(--txt);display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:700;font-size:11.5px}
+.cat .e{font-size:24px}
+.cat.on{border-color:var(--red);background:rgba(251,113,133,.14)}
+.sbtns{display:flex;gap:10px;margin-top:6px}
+.ghost{flex:1;border:2px solid var(--card-b);background:none;color:var(--txt);border-radius:18px;padding:15px 0;font-weight:800;font-size:16px}
+.note{font-size:13.5px;color:var(--mut);line-height:1.5}
+textarea{width:100%;height:100px;background:#0b1020;color:var(--txt);border:2px solid var(--card-b);border-radius:14px;padding:10px;font:600 12px ui-monospace,monospace}
+.toast{position:fixed;top:calc(14px + env(safe-area-inset-top));left:50%;transform:translate(-50%,-20px);background:#fff;color:#0b1020;font-weight:800;padding:12px 18px;border-radius:16px;opacity:0;transition:.3s;z-index:30;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,.4);font-size:14.5px;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.conf{position:fixed;inset:0;pointer-events:none;z-index:40;overflow:hidden}
+.conf i{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="brand">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none"><path d="M5 16V11.5L7 6.8C7.3 6.1 8 5.6 8.8 5.6h6.4c.8 0 1.5.5 1.8 1.2L19 11.5V16" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/><rect x="3.5" y="11" width="17" height="5.5" rx="2" fill="#1a1a1a"/><circle cx="7.5" cy="17.5" r="1.8" fill="#1a1a1a"/><circle cx="16.5" cy="17.5" r="1.8" fill="#1a1a1a"/><circle cx="7" cy="13.7" r="1" fill="#ffd60a"/><circle cx="17" cy="13.7" r="1" fill="#ffd60a"/><rect x="10" y="3" width="4" height="2.4" rx=".6" fill="#1a1a1a"/></svg></div>
+    <div><h1>Mi Taxi</h1><div class="d" id="today"></div></div>
+  </div>
+  <button class="iconbtn" id="openAjustes" aria-label="Ajustes">⚙️</button>
+</div>
+
+<div class="install" id="install">
+  <p id="installTxt">📲 Instala <b>Mi Taxi</b> en tu celular para abrirla como app.</p>
+  <button id="installBtn">Instalar</button>
+</div>
+
+<div class="tabs" id="tabs">
+  <div class="pill" id="pill"></div>
+  <button data-p="dia" class="on">Hoy</button>
+  <button data-p="semana">Semana</button>
+  <button data-p="mes">Mes</button>
+</div>
+
+<div class="hero" id="hero">
+  <div class="row1">
+    <div>
+      <div class="lbl" id="heroLbl">Te queda hoy limpio</div>
+      <div class="big" id="neto">S/ 0.00</div>
+      <div class="sub" id="heroSub">0 viajes</div>
+    </div>
+    <div class="ring" id="ringBox">
+      <svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="40" stroke="rgba(255,255,255,.18)" stroke-width="10" fill="none"/><circle id="ring" cx="48" cy="48" r="40" stroke="#fff" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="251.3"/></svg>
+      <div class="rt"><div><span id="ringPct">0%</span><small id="ringLbl">de tu meta</small></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="ic">💵</div><div class="l">Cobrado</div><div class="v" id="bruto">0.00</div></div>
+  <div class="stat"><div class="ic">📱</div><div class="l">Apps quitan</div><div class="v" style="color:var(--yellow)" id="comi">0.00</div></div>
+  <div class="stat"><div class="ic">⛽</div><div class="l">Gastos</div><div class="v" style="color:var(--red)" id="gast">0.00</div></div>
+</div>
+
+<div class="card">
+  <h2>¿A dónde se fue lo cobrado? <span id="donutPer">Hoy</span></h2>
+  <div class="donutwrap">
+    <div class="donut">
+      <svg width="130" height="130" viewBox="0 0 130 130" id="donut"><circle cx="65" cy="65" r="52" stroke="rgba(255,255,255,.07)" stroke-width="18" fill="none"/></svg>
+      <div class="c"><div><b id="donutC">0%</b>para ti</div></div>
+    </div>
+    <div class="leg" id="leg"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Últimos 7 días <span>lo que te quedó</span></h2>
+  <div class="bars" id="bars"></div>
+</div>
+
+<div class="card">
+  <h2>Movimientos <span id="movCount"></span></h2>
+  <div id="lista"></div>
+</div>
+
+<div class="foot">
+  <button class="link" id="openBackup">💾 Copia de seguridad</button>
+</div>
+
+<div class="actions">
+  <button class="btn g" id="addIng">＋ Ingreso</button>
+  <button class="btn r" id="addGas">－ Gasto</button>
+</div>
+
+<!-- INGRESO -->
+<div class="ov" id="ovIng"><div class="sheet">
+  <div class="grab"></div>
+  <h3>💰 Anotar ingreso</h3>
+  <label class="f">¿Con qué app fue?</label>
+  <div class="apps" id="appChips"></div>
+  <label class="f">¿Cuánto pagó el pasajero?</label>
+  <div class="money"><span>S/</span><input id="mIng" type="number" inputmode="decimal" placeholder="0.00"></div>
+  <div class="quick" id="quick"></div>
+  <div class="seg" id="tipoIng">
+    <button class="on" data-v="1">🚗 Un viaje</button>
+    <button data-v="varios">📋 Total de varios</button>
+  </div>
+  <div class="inl" id="nViajesBox" style="display:none"><label>¿Cuántos viajes fueron?</label><input id="nViajes" type="number" inputmode="numeric" value="2" min="1"></div>
+  <div class="inl" id="pctBox"><label>Porcentaje que quita la app</label><input id="pIng" type="number" inputmode="decimal"><b>%</b></div>
+  <div class="calc">
+    <div class="ln"><span>Cobraste</span><span id="cB">S/ 0.00</span></div>
+    <div class="ln" style="color:var(--yellow)"><span id="cAppLbl">La app te quita</span><span id="cC">− S/ 0.00</span></div>
+    <div class="split"><div id="spN" style="background:var(--green);width:100%"></div><div id="spC" style="background:var(--yellow);width:0"></div></div>
+    <div class="ln tot"><span>Te queda</span><span id="cN">S/ 0.00</span></div>
+  </div>
+  <div class="sbtns"><button class="ghost" data-close>Cancelar</button><button class="btn g" id="saveIng">Guardar ✓</button></div>
+</div></div>
+
+<!-- GASTO -->
+<div class="ov" id="ovGas"><div class="sheet">
+  <div class="grab"></div>
+  <h3>🧾 Anotar gasto</h3>
+  <label class="f">¿En qué gastaste?</label>
+  <div class="cats" id="gasChips"></div>
+  <label class="f">¿Cuánto?</label>
+  <div class="money"><span>S/</span><input id="mGas" type="number" inputmode="decimal" placeholder="0.00"></div>
+  <div class="quick" id="quickG"></div>
+  <div class="sbtns"><button class="ghost" data-close>Cancelar</button><button class="btn r" id="saveGas">Guardar ✓</button></div>
+</div></div>
+
+<!-- AJUSTES -->
+<div class="ov" id="ovAj"><div class="sheet">
+  <div class="grab"></div>
+  <h3>⚙️ Ajustes</h3>
+  <p class="note">Pon el porcentaje que te cobra cada app. Si cambia o hay promo (por ejemplo 0% un fin de semana), cámbialo aquí o en el mismo viaje.</p>
+  <div class="inl"><label>🟩 InDrive</label><input id="sIn" type="number" inputmode="decimal"><b>%</b></div>
+  <div class="inl"><label>🟧 DiDi</label><input id="sDi" type="number" inputmode="decimal"><b>%</b></div>
+  <div class="inl"><label>🎯 Meta diaria (lo que quieres que te quede)</label><input id="sMeta" type="number" inputmode="decimal"></div>
+  <p class="note">Los viajes de la calle (sin app) no pagan comisión.</p>
+  <div class="sbtns"><button class="ghost" data-close>Cancelar</button><button class="btn g" id="saveAj">Guardar ✓</button></div>
+</div></div>
+
+<!-- BACKUP -->
+<div class="ov" id="ovBk"><div class="sheet">
+  <div class="grab"></div>
+  <h3>💾 Copia de seguridad</h3>
+  <p class="note">Todo se guarda solito en este celular, aunque cierres la app. Igual, de vez en cuando toca <b>Copiar</b> y pégalo en un WhatsApp a ti mismo. Si cambias de celular, pega ese texto aquí y toca <b>Restaurar</b>.</p>
+  <textarea id="bkTxt" placeholder="Pega aquí tu copia para restaurar"></textarea>
+  <div class="sbtns"><button class="ghost" id="bkCopy">📋 Copiar</button><button class="ghost" id="bkRest">♻️ Restaurar</button></div>
+  <div class="sbtns"><button class="ghost" data-close>Cerrar</button></div>
+</div></div>
+
+<!-- CONFIRM -->
+<div class="ov" id="ovCf" style="align-items:center"><div class="sheet" style="border-radius:26px;margin:16px;padding-top:20px">
+  <h3 id="cfTxt">¿Borrar?</h3>
+  <div class="sbtns"><button class="ghost" data-close>No</button><button class="btn r" id="cfYes">Sí, borrar</button></div>
+</div></div>
+
+<!-- iOS -->
+<div class="ov" id="ovIos"><div class="sheet">
+  <div class="grab"></div>
+  <h3>📲 Instalar en iPhone</h3>
+  <p class="note" style="font-size:16px;color:var(--txt)">1. Abajo toca el botón <b>Compartir</b> (cuadrito con flecha ⬆️).<br><br>2. Baja y toca <b>"Agregar a pantalla de inicio"</b>.<br><br>3. Toca <b>Agregar</b>. ¡Listo! Ya tienes el ícono 🚕</p>
+  <div class="sbtns"><button class="ghost" data-close>Entendido</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+<div class="conf" id="conf"></div>
+
+<script>
+const KEY='mitaxi_v1';
+const APPS={
+  indrive:{n:'InDrive',c:'#c6f432',ab:'iD'},
+  didi:{n:'DiDi',c:'#ff8a3d',ab:'Di'},
+  calle:{n:'Calle',c:'#60a5fa',ab:'🚖'}
+};
+const GASTOS=[['gas','⛽','Gasolina/GNV'],['comida','🍗','Comida'],['lavado','🧽','Lavado'],['mant','🔧','Mecánico'],['cochera','🅿️','Cochera'],['celular','📱','Recarga'],['multa','🚨','Papeleta'],['otro','📦','Otro']];
+const $=id=>document.getElementById(id);
+const r2=n=>Math.round(n*100)/100;
+const fm=n=>'S/ '+r2(n).toFixed(2);
+const fs=n=>r2(n).toFixed(2);
+
+/* ---------- guardado ---------- */
+let db={pct:{indrive:10,didi:18},meta:150,mov:[]};
+function load(){
+  try{const r=localStorage.getItem(KEY);if(r)db=JSON.parse(r);}catch(e){}
+  db.pct=db.pct||{indrive:10,didi:18};db.mov=db.mov||[];if(db.meta==null)db.meta=150;
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){toast('⚠️ No se pudo guardar');}}
+// pedir al celular que no borre los datos
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
+
+function toast(t){const el=$('toast');el.innerHTML=t;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),1900);}
+function vib(ms){try{navigator.vibrate&&navigator.vibrate(ms||15);}catch(e){}}
+
+/* ---------- cálculo ---------- */
+let periodo='dia';
+function dayStart(t){const d=new Date(t);d.setHours(0,0,0,0);return d.getTime();}
+function inicio(p){const d=new Date();d.setHours(0,0,0,0);
+  if(p==='semana'){d.setDate(d.getDate()-((d.getDay()+6)%7));}
+  if(p==='mes'){d.setDate(1);}
+  return d.getTime();}
+function resumen(ms){
+  const o={b:0,c:0,g:0,v:0,app:{indrive:{b:0,c:0,v:0},didi:{b:0,c:0,v:0},calle:{b:0,c:0,v:0}}};
+  ms.forEach(m=>{if(m.k==='i'){o.b+=m.monto;o.c+=m.comi;o.v+=m.n||1;const a=o.app[m.app];if(a){a.b+=m.monto;a.c+=m.comi;a.v+=m.n||1;}}else o.g+=m.monto;});
+  o.n=o.b-o.c-o.g;return o;}
+
+/* contador animado */
+function countTo(el,to,prefix){const from=el._v||0;el._v=to;const t0=performance.now(),d=700;
+  function f(t){const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);el.textContent=(prefix||'')+(from+(to-from)*e).toFixed(2);if(k<1)requestAnimationFrame(f);}
+  requestAnimationFrame(f);}
+
+let metaCelebrada=null;
+function render(){
+  const desde=inicio(periodo);
+  const ms=db.mov.filter(m=>m.t>=desde).sort((a,b)=>b.t-a.t);
+  const R=resumen(ms);
+  const lbl={dia:'hoy',semana:'esta semana',mes:'este mes'}[periodo];
+
+  $('heroLbl').textContent='Te queda '+lbl+' limpio';
+  countTo($('neto'),R.n,'S/ ');
+  $('hero').classList.toggle('neg',R.n<0);
+  $('heroSub').textContent=R.v+(R.v===1?' viaje':' viajes')+(R.b>0?' · apps: '+(R.c/R.b*100).toFixed(1)+'%':'');
+  countTo($('bruto'),R.b);countTo($('comi'),R.c);countTo($('gast'),R.g);
+
+  // meta
+  const dias={dia:1,semana:7,mes:new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate()}[periodo];
+  const meta=(db.meta||0)*dias;
+  const pct=meta>0?Math.max(0,R.n/meta):0;
+  $('ring').style.strokeDashoffset=251.3*(1-Math.min(1,pct));
+  $('ringPct').textContent=Math.round(pct*100)+'%';
+  $('ringLbl').textContent='meta S/'+Math.round(meta);
+  $('ringBox').style.display=meta>0?'block':'none';
+
+  // dona
+  $('donutPer').textContent={dia:'Hoy',semana:'Semana',mes:'Mes'}[periodo];
+  const segs=[
+    ['Para ti',Math.max(0,R.n),'#34d399'],
+    ['InDrive',R.app.indrive.c,'#c6f432'],
+    ['DiDi',R.app.didi.c,'#ff8a3d'],
+    ['Gastos',R.g,'#fb7185']];
+  const tot=segs.reduce((s,x)=>s+x[1],0);
+  const C=2*Math.PI*52;let off=0,svg='<circle cx="65" cy="65" r="52" stroke="rgba(255,255,255,.07)" stroke-width="18" fill="none"/>';
+  if(tot>0)segs.forEach(s=>{if(s[1]<=0)return;const len=s[1]/tot*C;
+    svg+=`<circle cx="65" cy="65" r="52" stroke="${s[2]}" stroke-width="18" fill="none" stroke-dasharray="${Math.max(0,len-2)} ${C}" stroke-dashoffset="${-off}" stroke-linecap="butt"/>`;off+=len;});
+  $('donut').innerHTML=svg;
+  $('donutC').textContent=tot>0?Math.round(Math.max(0,R.n)/tot*100)+'%':'—';
+  $('leg').innerHTML=segs.map(s=>`<div><i style="background:${s[2]}"></i><span>${s[0]}</span><b>${fs(s[1])}</b></div>`).join('');
+
+  // barras 7 días
+  const hoy=dayStart(Date.now());const ds=[];
+  for(let i=6;i>=0;i--){const d=new Date(hoy);d.setDate(d.getDate()-i);const s=dayStart(d.getTime());const e2=new Date(s);e2.setDate(e2.getDate()+1);const e=e2.getTime();
+    ds.push({s,n:resumen(db.mov.filter(m=>m.t>=s&&m.t<e)).n});}
+  const mx=Math.max(1,...ds.map(d=>Math.abs(d.n)));
+  $('bars').innerHTML=ds.map((d,i)=>`<div class="bar"><div class="val">${d.n?Math.round(d.n):''}</div><div class="col ${d.n<0?'neg':''} ${i===6?'today':''}" style="height:${Math.abs(d.n)/mx*80}%"></div><div class="day">${i===6?'Hoy':new Date(d.s).toLocaleDateString('es-PE',{weekday:'short'}).replace('.','')}</div></div>`).join('');
+
+  // lista
+  $('movCount').textContent=ms.length?ms.length+' '+lbl:'';
+  if(!ms.length){$('lista').innerHTML='<div class="empty"><span class="e">🚕</span>Todavía no hay nada anotado '+lbl+'.<br>Cuando termines un viaje toca <b>＋ Ingreso</b>.</div>';}
+  else $('lista').innerHTML=ms.slice(0,100).map((m,i)=>{
+    const d=new Date(m.t);const hora=d.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
+    const fecha=periodo==='dia'?hora:d.toLocaleDateString('es-PE',{weekday:'short',day:'numeric'})+' · '+hora;
+    const st=`style="animation-delay:${Math.min(i,10)*30}ms"`;
+    if(m.k==='i'){const a=APPS[m.app]||APPS.calle;
+      return `<div class="mv" ${st}><div class="badge" style="background:${a.c}">${a.ab}</div><div class="info"><div class="t">${a.n}${(m.n||1)>1?' · '+m.n+' viajes':''}</div><div class="s">${fecha}${m.app!=='calle'?' · le quitó '+m.pct+'% (S/'+fs(m.comi)+')':''}</div></div><div class="amt" style="color:var(--green)">+${fs(m.monto-m.comi)}<small>cobró ${fs(m.monto)}</small></div><button class="del" data-del="${m.id}" aria-label="Borrar">✕</button></div>`;}
+    const g=GASTOS.find(x=>x[0]===m.cat)||GASTOS[GASTOS.length-1];
+    return `<div class="mv" ${st}><div class="badge" style="background:rgba(251,113,133,.16);font-size:22px">${g[1]}</div><div class="info"><div class="t">${g[2]}</div><div class="s">${fecha}</div></div><div class="amt" style="color:var(--red)">−${fs(m.monto)}</div><button class="del" data-del="${m.id}" aria-label="Borrar">✕</button></div>`;
+  }).join('');
+}
+
+/* confeti al llegar a la meta del día */
+function revisarMeta(){
+  const R=resumen(db.mov.filter(m=>m.t>=inicio('dia')));const k=new Date().toDateString();
+  if(db.meta>0&&R.n>=db.meta&&db.metaDia!==k){db.metaDia=k;save();confeti();setTimeout(()=>toast('🎉 ¡Llegaste a tu meta de hoy!'),400);}
+}
+function confeti(){const c=$('conf');const cols=['#ffd60a','#34d399','#c6f432','#ff8a3d','#60a5fa','#fb7185'];
+  for(let i=0;i<70;i++){const p=document.createElement('i');p.style.left=Math.random()*100+'%';p.style.background=cols[i%cols.length];
+    p.style.animationDuration=(1.6+Math.random()*1.6)+'s';p.style.animationDelay=Math.random()*.4+'s';c.appendChild(p);}
+  setTimeout(()=>c.innerHTML='',3800);}
+
+/* ---------- hojas ---------- */
+function open(id){$(id).classList.add('show');}
+function closeAll(){document.querySelectorAll('.ov').forEach(o=>o.classList.remove('show'));document.activeElement&&document.activeElement.blur();}
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeAll);
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeAll();}));
+
+/* ingreso */
+let selApp='indrive',tipo='1';
+function chipsApps(){
+  $('appChips').innerHTML=Object.keys(APPS).map(k=>{const a=APPS[k];return `<button class="appc ${k===selApp?'on':''}" style="--c:${a.c}" data-a="${k}"><div class="b" style="background:${a.c}">${a.ab}</div>${a.n}<small>${k==='calle'?'0%':db.pct[k]+'%'}</small></button>`;}).join('');
+  $('appChips').querySelectorAll('.appc').forEach(c=>c.onclick=()=>{vib();selApp=c.dataset.a;chipsApps();setPct();calc();});}
+function setPct(){$('pIng').value=selApp==='calle'?0:db.pct[selApp];$('pctBox').style.display=selApp==='calle'?'none':'flex';}
+function calc(){const b=parseFloat($('mIng').value)||0;const p=selApp==='calle'?0:(parseFloat($('pIng').value)||0);const c=b*p/100;
+  $('cB').textContent=fm(b);$('cC').textContent='− '+fm(c);$('cN').textContent=fm(b-c);
+  $('cAppLbl').textContent=selApp==='calle'?'Sin comisión 🙌':APPS[selApp].n+' te quita ('+p+'%)';
+  $('spN').style.width=(100-p)+'%';$('spC').style.width=p+'%';}
+$('mIng').oninput=calc;$('pIng').oninput=calc;
+$('quick').innerHTML=[8,10,12,15,20,25].map(v=>`<button data-q="${v}">${v}</button>`).join('');
+$('quick').onclick=e=>{const b=e.target.closest('[data-q]');if(!b)return;vib();$('mIng').value=b.dataset.q;calc();};
+$('tipoIng').querySelectorAll('button').forEach(c=>c.onclick=()=>{tipo=c.dataset.v;$('tipoIng').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===c));$('nViajesBox').style.display=tipo==='varios'?'flex':'none';});
+$('addIng').onclick=()=>{vib();$('mIng').value='';$('nViajes').value=2;tipo='1';
+  $('tipoIng').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v==='1'));$('nViajesBox').style.display='none';
+  chipsApps();setPct();calc();open('ovIng');};
+$('saveIng').onclick=()=>{const b=parseFloat($('mIng').value);if(!b||b<=0){toast('✍️ Escribe cuánto cobraste');return;}
+  const p=selApp==='calle'?0:(parseFloat($('pIng').value)||0);
+  const n=tipo==='varios'?Math.max(1,parseInt($('nViajes').value)||1):1;
+  db.mov.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),k:'i',t:Date.now(),app:selApp,monto:b,pct:p,comi:r2(b*p/100),n});
+  save();closeAll();render();vib(30);toast('✅ Guardado · te quedan <b>'+fm(b-b*p/100)+'</b>');revisarMeta();};
+
+/* gasto */
+let selGas='gas';
+function chipsGas(){$('gasChips').innerHTML=GASTOS.map(g=>`<button class="cat ${g[0]===selGas?'on':''}" data-g="${g[0]}"><span class="e">${g[1]}</span>${g[2]}</button>`).join('');
+  $('gasChips').querySelectorAll('.cat').forEach(c=>c.onclick=()=>{vib();selGas=c.dataset.g;chipsGas();});}
+$('quickG').innerHTML=[5,10,20,30,50,100].map(v=>`<button data-q="${v}">${v}</button>`).join('');
+$('quickG').onclick=e=>{const b=e.target.closest('[data-q]');if(!b)return;vib();$('mGas').value=b.dataset.q;};
+$('addGas').onclick=()=>{vib();$('mGas').value='';chipsGas();open('ovGas');};
+$('saveGas').onclick=()=>{const m=parseFloat($('mGas').value);if(!m||m<=0){toast('✍️ Escribe cuánto gastaste');return;}
+  db.mov.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),k:'g',t:Date.now(),cat:selGas,monto:m});
+  save();closeAll();render();vib(30);toast('✅ Gasto guardado');};
+
+/* borrar */
+let delId=null;
+$('lista').onclick=e=>{const b=e.target.closest('[data-del]');if(!b)return;delId=b.dataset.del;$('cfTxt').textContent='¿Borrar este movimiento?';open('ovCf');};
+$('cfYes').onclick=()=>{db.mov=db.mov.filter(m=>m.id!==delId);save();closeAll();render();toast('🗑️ Borrado');};
+
+/* ajustes */
+$('openAjustes').onclick=()=>{$('sIn').value=db.pct.indrive;$('sDi').value=db.pct.didi;$('sMeta').value=db.meta||'';open('ovAj');};
+$('saveAj').onclick=()=>{db.pct.indrive=parseFloat($('sIn').value)||0;db.pct.didi=parseFloat($('sDi').value)||0;db.meta=parseFloat($('sMeta').value)||0;save();closeAll();render();toast('✅ Ajustes guardados');};
+
+/* copia de seguridad */
+$('openBackup').onclick=()=>{$('bkTxt').value='';open('ovBk');};
+$('bkCopy').onclick=async()=>{const t=JSON.stringify(db);try{await navigator.clipboard.writeText(t);toast('📋 Copiado · pégalo en tu WhatsApp');}catch(e){$('bkTxt').value=t;$('bkTxt').select();toast('Mantén presionado el texto y copia');}};
+$('bkRest').onclick=()=>{try{const d=JSON.parse($('bkTxt').value);if(!Array.isArray(d.mov))throw 0;db=d;save();closeAll();render();toast('♻️ Restaurado');}catch(e){toast('Ese texto no es una copia válida');}};
+
+/* pestañas */
+const tabBtns=[...$('tabs').querySelectorAll('button')];
+tabBtns.forEach((b,i)=>b.onclick=()=>{vib(8);periodo=b.dataset.p;tabBtns.forEach(x=>x.classList.toggle('on',x===b));$('pill').style.transform=`translateX(${i*100}%)`;render();});
+
+/* instalar */
+const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+let deferred=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;if(!standalone)$('install').classList.add('show');});
+if(isIOS&&!standalone){$('install').classList.add('show');}
+$('installBtn').onclick=async()=>{if(deferred){deferred.prompt();await deferred.userChoice;deferred=null;$('install').classList.remove('show');}else if(isIOS){open('ovIos');}};
+window.addEventListener('appinstalled',()=>{$('install').classList.remove('show');toast('🚕 ¡App instalada!');});
+
+/* funciona sin internet */
+if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
+
+/* refrescar al volver a la app (por si cambió el día) */
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){load();render();}});
+
+$('today').textContent=new Date().toLocaleDateString('es-PE',{weekday:'long',day:'numeric',month:'long'});
+load();render();
+</script>
+</body>
+</html>
