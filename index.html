@@ -109,6 +109,22 @@ button{font-family:inherit;cursor:pointer}
 .src .s{font-size:12.5px;color:var(--mut)}
 .src .amt{text-align:right;font-weight:900;font-size:16px;color:var(--green)}
 .src .amt small{display:block;font-size:11.5px;color:var(--mut);font-weight:700}
+.mnav{display:none;align-items:center;justify-content:space-between;gap:10px;margin:-4px 0 12px}
+.mnav.show{display:flex}
+.mnav button{width:46px;height:46px;border-radius:14px;border:1px solid var(--card-b);background:var(--card);color:var(--txt);font-size:22px;font-weight:900}
+.mnav button:disabled{opacity:.25}
+.mnav .mt{flex:1;text-align:center;font-weight:900;font-size:19px;text-transform:capitalize}
+.mnav .mt small{display:block;font-size:12px;color:var(--mut);font-weight:700;text-transform:none}
+.hist{display:flex;align-items:center;gap:12px;padding:11px 10px;border-radius:14px;margin:0 -10px;cursor:pointer}
+.hist+.hist{border-top:1px solid var(--line)}
+.hist.on{background:rgba(255,255,255,.07)}
+.hist .cal{width:44px;height:44px;border-radius:14px;background:rgba(255,214,10,.15);color:var(--taxi);display:grid;place-items:center;font-weight:900;font-size:13px;line-height:1.05;text-align:center;flex:none}
+.hist .cal small{display:block;font-size:10px;opacity:.8}
+.hist .info{flex:1;min-width:0}
+.hist .t{font-weight:800;font-size:15.5px;text-transform:capitalize}
+.hist .s{font-size:12.5px;color:var(--mut)}
+.hist .amt{text-align:right;font-weight:900;font-size:16.5px}
+.hist .amt small{display:block;font-size:11px;color:var(--mut);font-weight:700}
 .foot{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
 .link{background:var(--card);border:1px solid var(--card-b);color:var(--mut);font-weight:700;font-size:13px;padding:9px 12px;border-radius:12px}
 
@@ -190,6 +206,12 @@ textarea{width:100%;height:100px;background:#0b1020;color:var(--txt);border:2px 
   <button data-p="mes">Mes</button>
 </div>
 
+<div class="mnav" id="mnav">
+  <button id="mPrev" aria-label="Mes anterior">‹</button>
+  <div class="mt" id="mTitle">Noviembre</div>
+  <button id="mNext" aria-label="Mes siguiente">›</button>
+</div>
+
 <div class="hero" id="hero">
   <div class="row1">
     <div>
@@ -224,6 +246,11 @@ textarea{width:100%;height:100px;background:#0b1020;color:var(--txt);border:2px 
     </div>
     <div class="leg" id="leg"></div>
   </div>
+</div>
+
+<div class="card" id="histCard" style="display:none">
+  <h2>📅 Historial de meses <span>toca uno para verlo</span></h2>
+  <div id="hist"></div>
 </div>
 
 <div class="card">
@@ -351,13 +378,15 @@ function toast(t){const el=$('toast');el.innerHTML=t;el.classList.add('show');cl
 function vib(ms){try{navigator.vibrate&&navigator.vibrate(ms||15);}catch(e){}}
 
 /* ---------- cálculo ---------- */
-let periodo='dia',filtro='todos';
+let periodo='dia',filtro='todos',mesOff=0;
 const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function dayStart(t){const d=new Date(t);d.setHours(0,0,0,0);return d.getTime();}
 function inicio(p){const d=new Date();d.setHours(0,0,0,0);
   if(p==='semana'){d.setDate(d.getDate()-((d.getDay()+6)%7));}
-  if(p==='mes'){d.setDate(1);}
+  if(p==='mes'){d.setDate(1);d.setMonth(d.getMonth()-mesOff);}
   return d.getTime();}
+function fin(p){if(p!=='mes')return Infinity;const d=new Date(inicio('mes'));d.setMonth(d.getMonth()+1);return d.getTime();}
+function nombreMes(t,conAnio){const d=new Date(t);const m=d.toLocaleDateString('es-PE',{month:'long'});return conAnio?m+' '+d.getFullYear():m;}
 function resumen(ms){
   const o={b:0,c:0,g:0,v:0,app:{indrive:{b:0,c:0,v:0},cabify:{b:0,c:0,v:0},otros:{b:0,c:0,v:0}}};
   ms.forEach(m=>{if(m.k==='i'){o.b+=m.monto;o.c+=m.comi;o.v+=m.n||1;const a=o.app[m.app];if(a){a.b+=m.monto;a.c+=m.comi;a.v+=m.n||1;}}else o.g+=m.monto;});
@@ -370,19 +399,20 @@ function countTo(el,to,prefix){const from=el._v||0;el._v=to;const t0=performance
 
 let metaCelebrada=null;
 function render(){
-  const desde=inicio(periodo);
-  const ms=db.mov.filter(m=>m.t>=desde).sort((a,b)=>b.t-a.t);
+  const desde=inicio(periodo),hasta=fin(periodo);
+  const ms=db.mov.filter(m=>m.t>=desde&&m.t<hasta).sort((a,b)=>b.t-a.t);
+  const pasado=periodo==='mes'&&mesOff>0;
   const R=resumen(ms);
-  const lbl={dia:'hoy',semana:'esta semana',mes:'este mes'}[periodo];
+  const lbl=pasado?'en '+nombreMes(desde):{dia:'hoy',semana:'esta semana',mes:'este mes'}[periodo];
 
-  $('heroLbl').textContent='Te queda '+lbl+' limpio';
+  $('heroLbl').textContent=pasado?'Te quedó '+lbl+' (limpio)':'Te queda '+lbl+' limpio';
   countTo($('neto'),R.n,'S/ ');
   $('hero').classList.toggle('neg',R.n<0);
   $('heroSub').textContent=R.v+(R.v===1?' viaje':' viajes')+(R.b>0?' · apps: '+(R.c/R.b*100).toFixed(1)+'%':'');
   countTo($('bruto'),R.b);countTo($('comi'),R.c);countTo($('gast'),R.g);
 
   // meta
-  const dias={dia:1,semana:7,mes:new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate()}[periodo];
+  const dias={dia:1,semana:7,mes:Math.round((hasta-desde)/864e5)}[periodo];
   const meta=(db.meta||0)*dias;
   const pct=meta>0?Math.max(0,R.n/meta):0;
   $('ring').style.strokeDashoffset=251.3*(1-Math.min(1,pct));
@@ -391,7 +421,8 @@ function render(){
   $('ringBox').style.display=meta>0?'block':'none';
 
   // dona
-  $('donutPer').textContent={dia:'Hoy',semana:'Semana',mes:'Mes'}[periodo];
+  const perTxt=periodo==='mes'?nombreMes(desde):{dia:'Hoy',semana:'Semana'}[periodo];
+  $('donutPer').textContent=perTxt;$('donutPer').style.textTransform='capitalize';
   const segs=[
     ['Para ti',Math.max(0,R.n),'#34d399'],
     ['InDrive',R.app.indrive.c,'#c6f432'],
@@ -413,10 +444,30 @@ function render(){
   $('bars').innerHTML=ds.map((d,i)=>`<div class="bar"><div class="val">${d.n?Math.round(d.n):''}</div><div class="col ${d.n<0?'neg':''} ${i===6?'today':''}" style="height:${Math.abs(d.n)/mx*80}%"></div><div class="day">${i===6?'Hoy':new Date(d.s).toLocaleDateString('es-PE',{weekday:'short'}).replace('.','')}</div></div>`).join('');
 
   // ingresos por fuente
-  $('ingPer').textContent={dia:'Hoy',semana:'Semana',mes:'Mes'}[periodo];
+  $('ingPer').textContent=perTxt;$('ingPer').style.textTransform='capitalize';
   $('ingresos').innerHTML=Object.keys(APPS).map(k=>{const a=APPS[k],p=R.app[k];
     return `<div class="src"><div class="badge" style="background:${a.c}">${a.ab}</div><div class="info"><div class="t">${a.n}</div><div class="s">${p.v} ${k==='otros'?'ingreso'+(p.v===1?'':'s'):'viaje'+(p.v===1?'':'s')}${k!=='otros'&&p.c?' · la app quitó S/'+fs(p.c):''}</div></div><div class="amt">${fs(p.b-p.c)}<small>${k!=='otros'?'cobrado '+fs(p.b):'sin comisión'}</small></div></div>`;}).join('')+
     `<div class="src"><div class="info"><div class="t">Total ingresos</div><div class="s">ya sin comisión de las apps</div></div><div class="amt" style="font-size:19px">S/ ${fs(R.b-R.c)}</div></div>`;
+
+  // navegación de meses e historial
+  $('mnav').classList.toggle('show',periodo==='mes');
+  $('histCard').style.display=periodo==='mes'?'block':'none';
+  if(periodo==='mes'){
+    $('mTitle').innerHTML=nombreMes(desde,true)+'<small>'+(mesOff===0?'mes actual':'hace '+mesOff+(mesOff===1?' mes':' meses'))+'</small>';
+    $('mNext').disabled=mesOff===0;
+    const primero=db.mov.length?Math.min(...db.mov.map(m=>m.t)):Date.now();
+    const p0=new Date(primero),h=new Date();
+    let total=(h.getFullYear()-p0.getFullYear())*12+(h.getMonth()-p0.getMonth());
+    $('mPrev').disabled=mesOff>=Math.max(total,0);
+    let html='';
+    for(let off=0;off<=Math.max(total,0);off++){
+      const a=new Date();a.setHours(0,0,0,0);a.setDate(1);a.setMonth(a.getMonth()-off);
+      const b=new Date(a);b.setMonth(b.getMonth()+1);
+      const Rm=resumen(db.mov.filter(m=>m.t>=a.getTime()&&m.t<b.getTime()));
+      html+=`<div class="hist ${off===mesOff?'on':''}" data-off="${off}"><div class="cal">${a.toLocaleDateString('es-PE',{month:'short'}).replace('.','').toUpperCase()}<small>${a.getFullYear()}</small></div><div class="info"><div class="t">${nombreMes(a.getTime(),true)}</div><div class="s">ingresos ${fs(Rm.b-Rm.c)} · gastos ${fs(Rm.g)} · ${Rm.v} viajes</div></div><div class="amt" style="color:${Rm.n<0?'var(--red)':'var(--green)'}">${fs(Rm.n)}<small>te quedó</small></div></div>`;
+    }
+    $('hist').innerHTML=html;
+  }
 
   // lista
   const msF=filtro==='todos'?ms:ms.filter(m=>m.k===filtro);
@@ -501,9 +552,14 @@ $('bkRest').onclick=()=>{try{const d=JSON.parse($('bkTxt').value);if(!Array.isAr
 /* filtro de movimientos */
 $('filt').querySelectorAll('button').forEach(b=>b.onclick=()=>{vib(8);filtro=b.dataset.f;$('filt').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));render();});
 
+/* historial de meses */
+$('mPrev').onclick=()=>{vib(8);mesOff++;render();};
+$('mNext').onclick=()=>{vib(8);if(mesOff>0){mesOff--;render();}};
+$('hist').onclick=e=>{const h=e.target.closest('[data-off]');if(!h)return;vib(8);mesOff=+h.dataset.off;render();window.scrollTo({top:0,behavior:'smooth'});};
+
 /* pestañas */
 const tabBtns=[...$('tabs').querySelectorAll('button')];
-tabBtns.forEach((b,i)=>b.onclick=()=>{vib(8);periodo=b.dataset.p;tabBtns.forEach(x=>x.classList.toggle('on',x===b));$('pill').style.transform=`translateX(${i*100}%)`;render();});
+tabBtns.forEach((b,i)=>b.onclick=()=>{vib(8);periodo=b.dataset.p;mesOff=0;tabBtns.forEach(x=>x.classList.toggle('on',x===b));$('pill').style.transform=`translateX(${i*100}%)`;render();});
 
 /* instalar */
 const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
