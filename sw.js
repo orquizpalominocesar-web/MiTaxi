@@ -1,5 +1,5 @@
 // Mi Taxi: guarda la app en el celular para que abra aunque no haya internet
-const CACHE = 'mitaxi-v2';
+const CACHE = 'mitaxi-v3';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

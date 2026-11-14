@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
-<meta name="description" content="Cuentas del taxi: ingresos, comisión de InDrive y DiDi, y gastos.">
+<meta name="description" content="Cuentas del taxi: ingresos, comisión de InDrive y Cabify, y gastos.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -18,7 +18,7 @@
   --bg:#0b1020; --card:rgba(255,255,255,.06); --card-b:rgba(255,255,255,.10);
   --txt:#f8fafc; --mut:#9aa4b8; --line:rgba(255,255,255,.08);
   --green:#34d399; --green2:#10b981; --red:#fb7185; --yellow:#fde047;
-  --indrive:#c6f432; --didi:#ff8a3d; --calle:#60a5fa; --taxi:#ffd60a;
+  --indrive:#c6f432; --cabify:#8b6cff; --otros:#60a5fa; --taxi:#ffd60a;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior-y:none}
@@ -96,6 +96,19 @@ button{font-family:inherit;cursor:pointer}
 .empty{color:var(--mut);text-align:center;padding:18px 6px;font-size:14.5px;line-height:1.5}
 .empty .e{font-size:40px;display:block;margin-bottom:6px}
 
+.txt{width:100%;background:#0b1020;border:2px solid var(--card-b);border-radius:16px;color:var(--txt);font-weight:700;font-size:17px;padding:14px 16px;margin-bottom:12px;outline:none;font-family:inherit}
+.txt:focus{border-color:var(--green)}
+.filt{display:flex;gap:6px;margin-bottom:6px}
+.filt button{flex:1;border:1px solid var(--card-b);background:transparent;color:var(--mut);border-radius:12px;padding:8px 0;font-weight:800;font-size:13.5px}
+.filt button.on{background:#fff;color:#0b1020;border-color:#fff}
+.src{display:flex;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--line)}
+.src:first-of-type{border-top:0}
+.src .badge{width:38px;height:38px;border-radius:12px;font-size:13px}
+.src .info{flex:1}
+.src .t{font-weight:800;font-size:15px}
+.src .s{font-size:12.5px;color:var(--mut)}
+.src .amt{text-align:right;font-weight:900;font-size:16px;color:var(--green)}
+.src .amt small{display:block;font-size:11.5px;color:var(--mut);font-weight:700}
 .foot{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
 .link{background:var(--card);border:1px solid var(--card-b);color:var(--mut);font-weight:700;font-size:13px;padding:9px 12px;border-radius:12px}
 
@@ -192,9 +205,14 @@ textarea{width:100%;height:100px;background:#0b1020;color:var(--txt);border:2px 
 </div>
 
 <div class="stats">
-  <div class="stat"><div class="ic">💵</div><div class="l">Cobrado</div><div class="v" id="bruto">0.00</div></div>
+  <div class="stat"><div class="ic">💵</div><div class="l">Ingresos</div><div class="v" id="bruto">0.00</div></div>
   <div class="stat"><div class="ic">📱</div><div class="l">Apps quitan</div><div class="v" style="color:var(--yellow)" id="comi">0.00</div></div>
   <div class="stat"><div class="ic">⛽</div><div class="l">Gastos</div><div class="v" style="color:var(--red)" id="gast">0.00</div></div>
+</div>
+
+<div class="card">
+  <h2>💰 Ingresos <span id="ingPer">Hoy</span></h2>
+  <div id="ingresos"></div>
 </div>
 
 <div class="card">
@@ -215,6 +233,7 @@ textarea{width:100%;height:100px;background:#0b1020;color:var(--txt);border:2px 
 
 <div class="card">
   <h2>Movimientos <span id="movCount"></span></h2>
+  <div class="filt" id="filt"><button class="on" data-f="todos">Todos</button><button data-f="i">💰 Ingresos</button><button data-f="g">🧾 Gastos</button></div>
   <div id="lista"></div>
 </div>
 
@@ -231,11 +250,13 @@ textarea{width:100%;height:100px;background:#0b1020;color:var(--txt);border:2px 
 <div class="ov" id="ovIng"><div class="sheet">
   <div class="grab"></div>
   <h3>💰 Anotar ingreso</h3>
-  <label class="f">¿Con qué app fue?</label>
+  <label class="f">¿De dónde es el ingreso?</label>
   <div class="apps" id="appChips"></div>
-  <label class="f">¿Cuánto pagó el pasajero?</label>
+  <label class="f">¿Cuánto te pagaron?</label>
   <div class="money"><span>S/</span><input id="mIng" type="number" inputmode="decimal" placeholder="0.00"></div>
   <div class="quick" id="quick"></div>
+  <label class="f">Descripción <span style="opacity:.7">(opcional)</span></label>
+  <input class="txt" id="dIng" type="text" maxlength="60" placeholder="Ej: carrera al aeropuerto, encargo, propina…">
   <div class="seg" id="tipoIng">
     <button class="on" data-v="1">🚗 Un viaje</button>
     <button data-v="varios">📋 Total de varios</button>
@@ -269,9 +290,9 @@ textarea{width:100%;height:100px;background:#0b1020;color:var(--txt);border:2px 
   <h3>⚙️ Ajustes</h3>
   <p class="note">Pon el porcentaje que te cobra cada app. Si cambia o hay promo (por ejemplo 0% un fin de semana), cámbialo aquí o en el mismo viaje.</p>
   <div class="inl"><label>🟩 InDrive</label><input id="sIn" type="number" inputmode="decimal"><b>%</b></div>
-  <div class="inl"><label>🟧 DiDi</label><input id="sDi" type="number" inputmode="decimal"><b>%</b></div>
+  <div class="inl"><label>🟪 Cabify</label><input id="sDi" type="number" inputmode="decimal"><b>%</b></div>
   <div class="inl"><label>🎯 Meta diaria (lo que quieres que te quede)</label><input id="sMeta" type="number" inputmode="decimal"></div>
-  <p class="note">Los viajes de la calle (sin app) no pagan comisión.</p>
+  <p class="note">Los "Otros ingresos" (carreras por fuera de las apps, encargos, etc.) no pagan comisión.</p>
   <div class="sbtns"><button class="ghost" data-close>Cancelar</button><button class="btn g" id="saveAj">Guardar ✓</button></div>
 </div></div>
 
@@ -306,8 +327,8 @@ textarea{width:100%;height:100px;background:#0b1020;color:var(--txt);border:2px 
 const KEY='mitaxi_v1';
 const APPS={
   indrive:{n:'InDrive',c:'#c6f432',ab:'iD'},
-  didi:{n:'DiDi',c:'#ff8a3d',ab:'Di'},
-  calle:{n:'Calle',c:'#60a5fa',ab:'🚖'}
+  cabify:{n:'Cabify',c:'#8b6cff',ab:'Cb'},
+  otros:{n:'Otros ingresos',c:'#60a5fa',ab:'💵'}
 };
 const GASTOS=[['gas','⛽','Gasolina/GNV'],['comida','🍗','Comida'],['lavado','🧽','Lavado'],['mant','🔧','Mecánico'],['cochera','🅿️','Cochera'],['celular','📱','Recarga'],['multa','🚨','Papeleta'],['otro','📦','Otro']];
 const $=id=>document.getElementById(id);
@@ -316,10 +337,11 @@ const fm=n=>'S/ '+r2(n).toFixed(2);
 const fs=n=>r2(n).toFixed(2);
 
 /* ---------- guardado ---------- */
-let db={pct:{indrive:10,didi:18},meta:150,mov:[]};
+let db={pct:{indrive:10,cabify:25},meta:150,mov:[]};
 function load(){
   try{const r=localStorage.getItem(KEY);if(r)db=JSON.parse(r);}catch(e){}
-  db.pct=db.pct||{indrive:10,didi:18};db.mov=db.mov||[];if(db.meta==null)db.meta=150;
+  db.pct=db.pct||{};if(db.pct.indrive==null)db.pct.indrive=10;if(db.pct.cabify==null)db.pct.cabify=25;delete db.pct.didi;db.mov=db.mov||[];if(db.meta==null)db.meta=150;
+  db.mov.forEach(m=>{if(m.app==='didi')m.app='cabify';if(m.app==='calle')m.app='otros';});
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){toast('⚠️ No se pudo guardar');}}
 // pedir al celular que no borre los datos
@@ -329,14 +351,15 @@ function toast(t){const el=$('toast');el.innerHTML=t;el.classList.add('show');cl
 function vib(ms){try{navigator.vibrate&&navigator.vibrate(ms||15);}catch(e){}}
 
 /* ---------- cálculo ---------- */
-let periodo='dia';
+let periodo='dia',filtro='todos';
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function dayStart(t){const d=new Date(t);d.setHours(0,0,0,0);return d.getTime();}
 function inicio(p){const d=new Date();d.setHours(0,0,0,0);
   if(p==='semana'){d.setDate(d.getDate()-((d.getDay()+6)%7));}
   if(p==='mes'){d.setDate(1);}
   return d.getTime();}
 function resumen(ms){
-  const o={b:0,c:0,g:0,v:0,app:{indrive:{b:0,c:0,v:0},didi:{b:0,c:0,v:0},calle:{b:0,c:0,v:0}}};
+  const o={b:0,c:0,g:0,v:0,app:{indrive:{b:0,c:0,v:0},cabify:{b:0,c:0,v:0},otros:{b:0,c:0,v:0}}};
   ms.forEach(m=>{if(m.k==='i'){o.b+=m.monto;o.c+=m.comi;o.v+=m.n||1;const a=o.app[m.app];if(a){a.b+=m.monto;a.c+=m.comi;a.v+=m.n||1;}}else o.g+=m.monto;});
   o.n=o.b-o.c-o.g;return o;}
 
@@ -372,7 +395,7 @@ function render(){
   const segs=[
     ['Para ti',Math.max(0,R.n),'#34d399'],
     ['InDrive',R.app.indrive.c,'#c6f432'],
-    ['DiDi',R.app.didi.c,'#ff8a3d'],
+    ['Cabify',R.app.cabify.c,'#8b6cff'],
     ['Gastos',R.g,'#fb7185']];
   const tot=segs.reduce((s,x)=>s+x[1],0);
   const C=2*Math.PI*52;let off=0,svg='<circle cx="65" cy="65" r="52" stroke="rgba(255,255,255,.07)" stroke-width="18" fill="none"/>';
@@ -389,15 +412,22 @@ function render(){
   const mx=Math.max(1,...ds.map(d=>Math.abs(d.n)));
   $('bars').innerHTML=ds.map((d,i)=>`<div class="bar"><div class="val">${d.n?Math.round(d.n):''}</div><div class="col ${d.n<0?'neg':''} ${i===6?'today':''}" style="height:${Math.abs(d.n)/mx*80}%"></div><div class="day">${i===6?'Hoy':new Date(d.s).toLocaleDateString('es-PE',{weekday:'short'}).replace('.','')}</div></div>`).join('');
 
+  // ingresos por fuente
+  $('ingPer').textContent={dia:'Hoy',semana:'Semana',mes:'Mes'}[periodo];
+  $('ingresos').innerHTML=Object.keys(APPS).map(k=>{const a=APPS[k],p=R.app[k];
+    return `<div class="src"><div class="badge" style="background:${a.c}">${a.ab}</div><div class="info"><div class="t">${a.n}</div><div class="s">${p.v} ${k==='otros'?'ingreso'+(p.v===1?'':'s'):'viaje'+(p.v===1?'':'s')}${k!=='otros'&&p.c?' · la app quitó S/'+fs(p.c):''}</div></div><div class="amt">${fs(p.b-p.c)}<small>${k!=='otros'?'cobrado '+fs(p.b):'sin comisión'}</small></div></div>`;}).join('')+
+    `<div class="src"><div class="info"><div class="t">Total ingresos</div><div class="s">ya sin comisión de las apps</div></div><div class="amt" style="font-size:19px">S/ ${fs(R.b-R.c)}</div></div>`;
+
   // lista
-  $('movCount').textContent=ms.length?ms.length+' '+lbl:'';
-  if(!ms.length){$('lista').innerHTML='<div class="empty"><span class="e">🚕</span>Todavía no hay nada anotado '+lbl+'.<br>Cuando termines un viaje toca <b>＋ Ingreso</b>.</div>';}
-  else $('lista').innerHTML=ms.slice(0,100).map((m,i)=>{
+  const msF=filtro==='todos'?ms:ms.filter(m=>m.k===filtro);
+  $('movCount').textContent=msF.length?msF.length+' '+lbl:'';
+  if(!msF.length){$('lista').innerHTML='<div class="empty"><span class="e">🚕</span>Todavía no hay '+({todos:'nada anotado',i:'ingresos',g:'gastos'}[filtro])+' '+lbl+'.'+(filtro==='todos'?'<br>Cuando termines un viaje toca <b>＋ Ingreso</b>.':'')+'</div>';}
+  else $('lista').innerHTML=msF.slice(0,100).map((m,i)=>{
     const d=new Date(m.t);const hora=d.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
     const fecha=periodo==='dia'?hora:d.toLocaleDateString('es-PE',{weekday:'short',day:'numeric'})+' · '+hora;
     const st=`style="animation-delay:${Math.min(i,10)*30}ms"`;
-    if(m.k==='i'){const a=APPS[m.app]||APPS.calle;
-      return `<div class="mv" ${st}><div class="badge" style="background:${a.c}">${a.ab}</div><div class="info"><div class="t">${a.n}${(m.n||1)>1?' · '+m.n+' viajes':''}</div><div class="s">${fecha}${m.app!=='calle'?' · le quitó '+m.pct+'% (S/'+fs(m.comi)+')':''}</div></div><div class="amt" style="color:var(--green)">+${fs(m.monto-m.comi)}<small>cobró ${fs(m.monto)}</small></div><button class="del" data-del="${m.id}" aria-label="Borrar">✕</button></div>`;}
+    if(m.k==='i'){const a=APPS[m.app]||APPS.otros;
+      return `<div class="mv" ${st}><div class="badge" style="background:${a.c}">${a.ab}</div><div class="info"><div class="t">${m.desc?esc(m.desc):a.n}${(m.n||1)>1?' · '+m.n+' viajes':''}</div><div class="s">${m.desc?a.n+' · ':''}${fecha}${m.app!=='otros'?' · le quitó '+m.pct+'% (S/'+fs(m.comi)+')':''}</div></div><div class="amt" style="color:var(--green)">+${fs(m.monto-m.comi)}<small>cobró ${fs(m.monto)}</small></div><button class="del" data-del="${m.id}" aria-label="Borrar">✕</button></div>`;}
     const g=GASTOS.find(x=>x[0]===m.cat)||GASTOS[GASTOS.length-1];
     return `<div class="mv" ${st}><div class="badge" style="background:rgba(251,113,133,.16);font-size:22px">${g[1]}</div><div class="info"><div class="t">${g[2]}</div><div class="s">${fecha}</div></div><div class="amt" style="color:var(--red)">−${fs(m.monto)}</div><button class="del" data-del="${m.id}" aria-label="Borrar">✕</button></div>`;
   }).join('');
@@ -422,24 +452,25 @@ document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.
 /* ingreso */
 let selApp='indrive',tipo='1';
 function chipsApps(){
-  $('appChips').innerHTML=Object.keys(APPS).map(k=>{const a=APPS[k];return `<button class="appc ${k===selApp?'on':''}" style="--c:${a.c}" data-a="${k}"><div class="b" style="background:${a.c}">${a.ab}</div>${a.n}<small>${k==='calle'?'0%':db.pct[k]+'%'}</small></button>`;}).join('');
+  $('appChips').innerHTML=Object.keys(APPS).map(k=>{const a=APPS[k];return `<button class="appc ${k===selApp?'on':''}" style="--c:${a.c}" data-a="${k}"><div class="b" style="background:${a.c}">${a.ab}</div>${a.n}<small>${k==='otros'?'0%':db.pct[k]+'%'}</small></button>`;}).join('');
   $('appChips').querySelectorAll('.appc').forEach(c=>c.onclick=()=>{vib();selApp=c.dataset.a;chipsApps();setPct();calc();});}
-function setPct(){$('pIng').value=selApp==='calle'?0:db.pct[selApp];$('pctBox').style.display=selApp==='calle'?'none':'flex';}
-function calc(){const b=parseFloat($('mIng').value)||0;const p=selApp==='calle'?0:(parseFloat($('pIng').value)||0);const c=b*p/100;
+function setPct(){$('pIng').value=selApp==='otros'?0:db.pct[selApp];$('pctBox').style.display=selApp==='otros'?'none':'flex';}
+function calc(){const b=parseFloat($('mIng').value)||0;const p=selApp==='otros'?0:(parseFloat($('pIng').value)||0);const c=b*p/100;
   $('cB').textContent=fm(b);$('cC').textContent='− '+fm(c);$('cN').textContent=fm(b-c);
-  $('cAppLbl').textContent=selApp==='calle'?'Sin comisión 🙌':APPS[selApp].n+' te quita ('+p+'%)';
+  $('cAppLbl').textContent=selApp==='otros'?'Sin comisión 🙌':APPS[selApp].n+' te quita ('+p+'%)';
   $('spN').style.width=(100-p)+'%';$('spC').style.width=p+'%';}
 $('mIng').oninput=calc;$('pIng').oninput=calc;
 $('quick').innerHTML=[8,10,12,15,20,25].map(v=>`<button data-q="${v}">${v}</button>`).join('');
 $('quick').onclick=e=>{const b=e.target.closest('[data-q]');if(!b)return;vib();$('mIng').value=b.dataset.q;calc();};
 $('tipoIng').querySelectorAll('button').forEach(c=>c.onclick=()=>{tipo=c.dataset.v;$('tipoIng').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===c));$('nViajesBox').style.display=tipo==='varios'?'flex':'none';});
-$('addIng').onclick=()=>{vib();$('mIng').value='';$('nViajes').value=2;tipo='1';
+$('addIng').onclick=()=>{vib();$('mIng').value='';$('dIng').value='';$('nViajes').value=2;tipo='1';
   $('tipoIng').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v==='1'));$('nViajesBox').style.display='none';
   chipsApps();setPct();calc();open('ovIng');};
 $('saveIng').onclick=()=>{const b=parseFloat($('mIng').value);if(!b||b<=0){toast('✍️ Escribe cuánto cobraste');return;}
-  const p=selApp==='calle'?0:(parseFloat($('pIng').value)||0);
+  const p=selApp==='otros'?0:(parseFloat($('pIng').value)||0);
   const n=tipo==='varios'?Math.max(1,parseInt($('nViajes').value)||1):1;
-  db.mov.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),k:'i',t:Date.now(),app:selApp,monto:b,pct:p,comi:r2(b*p/100),n});
+  const desc=$('dIng').value.trim();
+  db.mov.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),k:'i',t:Date.now(),app:selApp,monto:b,pct:p,comi:r2(b*p/100),n,desc});
   save();closeAll();render();vib(30);toast('✅ Guardado · te quedan <b>'+fm(b-b*p/100)+'</b>');revisarMeta();};
 
 /* gasto */
@@ -459,13 +490,16 @@ $('lista').onclick=e=>{const b=e.target.closest('[data-del]');if(!b)return;delId
 $('cfYes').onclick=()=>{db.mov=db.mov.filter(m=>m.id!==delId);save();closeAll();render();toast('🗑️ Borrado');};
 
 /* ajustes */
-$('openAjustes').onclick=()=>{$('sIn').value=db.pct.indrive;$('sDi').value=db.pct.didi;$('sMeta').value=db.meta||'';open('ovAj');};
-$('saveAj').onclick=()=>{db.pct.indrive=parseFloat($('sIn').value)||0;db.pct.didi=parseFloat($('sDi').value)||0;db.meta=parseFloat($('sMeta').value)||0;save();closeAll();render();toast('✅ Ajustes guardados');};
+$('openAjustes').onclick=()=>{$('sIn').value=db.pct.indrive;$('sDi').value=db.pct.cabify;$('sMeta').value=db.meta||'';open('ovAj');};
+$('saveAj').onclick=()=>{db.pct.indrive=parseFloat($('sIn').value)||0;db.pct.cabify=parseFloat($('sDi').value)||0;db.meta=parseFloat($('sMeta').value)||0;save();closeAll();render();toast('✅ Ajustes guardados');};
 
 /* copia de seguridad */
 $('openBackup').onclick=()=>{$('bkTxt').value='';open('ovBk');};
 $('bkCopy').onclick=async()=>{const t=JSON.stringify(db);try{await navigator.clipboard.writeText(t);toast('📋 Copiado · pégalo en tu WhatsApp');}catch(e){$('bkTxt').value=t;$('bkTxt').select();toast('Mantén presionado el texto y copia');}};
 $('bkRest').onclick=()=>{try{const d=JSON.parse($('bkTxt').value);if(!Array.isArray(d.mov))throw 0;db=d;save();closeAll();render();toast('♻️ Restaurado');}catch(e){toast('Ese texto no es una copia válida');}};
+
+/* filtro de movimientos */
+$('filt').querySelectorAll('button').forEach(b=>b.onclick=()=>{vib(8);filtro=b.dataset.f;$('filt').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));render();});
 
 /* pestañas */
 const tabBtns=[...$('tabs').querySelectorAll('button')];
